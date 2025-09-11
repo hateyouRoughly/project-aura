@@ -294,7 +294,7 @@ export default function AuraShowcasePage() {
                  <footer className="w-full text-center py-12 text-slate-500">
                     <p>&copy; 2025 Project Aura. The countdown has begun.</p>
                 </footer>
-            </main>a
+            </main>
         </div>
     );
 }
