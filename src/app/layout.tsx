@@ -12,9 +12,53 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = "Project Aura | Your AI Web Co-Pilot";
+const description = "Project Aura translates natural language into direct browser actions, automating web tasks intelligently.";
+const imageUrl = "https://aura.deepakrajpurohit.com/og-image.png";
+const siteUrl = "https://aura.deepakrajpurohit.com/";
+
 export const metadata: Metadata = {
-  title: "Project Aura - The AI-Powered Web Co-Pilot",
-  description: "Project Aura is an intelligent, user-driven web automation platform designed to translate natural language instructions into direct browser actions.",
+  title: title,
+  description: description,
+  keywords: ['AI', 'Web Automation', 'Co-Pilot', 'Natural Language', 'Browser Actions'],
+  alternates: {
+    canonical: siteUrl,
+  },
+  openGraph: {
+    title: title,
+    description: description,
+    url: siteUrl,
+    siteName: 'Project Aura',
+    type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: `A promotional image for ${title}`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: title,
+    description: description,
+    images: [
+      {
+        url: imageUrl,
+        alt: `A promotional image for ${title}`,
+      },
+    ],
+  },
+  icons: {
+    icon: '/favicon.ico',
+  },
+  appleWebApp: {
+    title: title,
+    statusBarStyle: 'default',
+    capable: true,
+  },
 };
 
 export default function RootLayout({
