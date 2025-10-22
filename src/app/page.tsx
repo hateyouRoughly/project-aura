@@ -13,7 +13,7 @@ export default function AuraShowcasePage() {
     const sectionsRef = useRef<Map<string, HTMLElement> | null>(null);
     const navLinksRef = useRef<Map<string, HTMLAnchorElement> | null>(null);
     const [typedTitle, setTypedTitle] = useState('');
-        const fullTitle = "The Future of Web Automation is Coming";
+        const fullTitle = "Thhe Future of Web Automation is Coming";
 
     const getMap = (ref: React.MutableRefObject<Map<string, HTMLElement | HTMLAnchorElement> | null>) => {
         if (!ref.current) {
