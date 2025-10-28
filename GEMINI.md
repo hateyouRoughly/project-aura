@@ -2,53 +2,64 @@
 
 ## Project Overview
 
-This is a Next.js and React project that serves as a showcase and landing page for "Project Aura". Aura is an AI-powered web automation platform that uses natural language to perform browser-based tasks. The project is built with TypeScript and styled with Tailwind CSS. It features a responsive design with a dark theme and various interactive elements.
+This repository contains the codebase for "Project Aura," an AI-powered web automation co-pilot. The project is built on Next.js, using TypeScript for the frontend and backend. The backend is designed with a modular architecture, leveraging several key design patterns to ensure scalability and maintainability.
 
-The core technologies used are:
-
-*   **Frontend:** Next.js, React, TypeScript
+*   **Core Technologies:** Next.js, TypeScript, Playwright, MongoDB (with Mongoose)
 *   **Styling:** Tailwind CSS
 *   **Linting:** ESLint
 
-The project is structured as a standard Next.js application with the main page at `src/app/page.tsx` and the layout at `src/app/layout.tsx`.
+## Backend Architecture
+
+The backend follows a sophisticated, pattern-driven architecture to decouple concerns and enhance testability.
+
+*   **Facade Pattern:** The `AutomationFacade` (`src/lib/facade`) provides a simplified, single entry point for initiating automation jobs from the client.
+*   **Observer Pattern:** The `JobStatusNotifier` and `WebSocketManager` (`src/lib/job`) provide real-time updates on job progress to the client.
+*   **Factory Pattern:** The `BrowserAgentFactory` (`src/lib/browser`) decouples the system from the specific browser automation tool (Playwright) by providing a consistent interface for creating browser agents.
+*   **Strategy Pattern:** The `AIInterpreter` (`src/lib/ai`) uses the strategy pattern with `IAIModelStrategy` to allow for different AI models (e.g., Gemini, Claude) to be used interchangeably for action generation.
+*   **Command Pattern:** Actions like clicking and typing are encapsulated as command objects (`ClickCommand`, `TypeCommand` in `src/lib/execution`) that implement the `IActionCommand` interface. This makes the actions easy to execute, log, and extend.
+
+## Data Model
+
+The application uses MongoDB for data persistence, with Mongoose for object data modeling. The schemas are defined in `src/lib/db/models`.
+
+*   **Users:** Stores user information.
+*   **Credentials:** Securely stores encrypted user credentials for websites.
+*   **AutomationJobs:** Represents a single automation task, including its goal, status, and timing information.
+*   **AuditLogs:** Records a detailed log of every action performed within an `AutomationJob` for traceability and debugging.
+
+## Core Automation Flow
+
+1.  The client sends a request to the `AutomationFacade` to start a job.
+2.  The facade creates a new `AutomationJob` record in the database.
+3.  The `JobProcessor` is invoked, which uses the `BrowserAgentFactory` to launch a new browser instance.
+4.  The processor enters a loop, capturing the state of the web page on each iteration.
+5.  The `AIInterpreter` (using a specific `Strategy`) analyzes the state and the user's goal to determine the next `IActionCommand`.
+6.  The `ExecutionManager` executes the command.
+7.  The `JobStatusNotifier` sends updates to the client via WebSockets.
+8.  The loop continues until the AI determines the task is complete.
 
 ## Building and Running
-
-To get the project up and running, follow these steps:
 
 1.  **Install Dependencies:**
     ```bash
     npm install
     ```
-
-2.  **Run the Development Server:**
+2.  **Configure Environment:** Create a `.env.local` file and add your `MONGODB_URI`.
+3.  **Run the Development Server:**
     ```bash
     npm run dev
     ```
-    This will start the development server at `http://localhost:3000`.
-
-3.  **Build for Production:**
+4.  **Build for Production:**
     ```bash
     npm run build
     ```
-    This will create a production-ready build in the `.next` directory.
-
-4.  **Start the Production Server:**
-    ```bash
-    npm run start
-    ```
-    This will start the production server.
-
 5.  **Lint the Code:**
     ```bash
     npm run lint
     ```
-    This will run ESLint to check for any code quality issues.
 
 ## Development Conventions
 
-*   **TypeScript:** The project is written in TypeScript, and all new code should be as well.
-*   **Styling:** Tailwind CSS is used for styling. Utility-first classes are preferred.
-*   **Components:** The main page is composed of several React components, such as `NavLink`, `FeatureCard`, and `VideoPlayer`. New UI elements should be created as reusable components where appropriate.
-*   **Linting:** The project uses ESLint with the `eslint-config-next` configuration. All code should adhere to the linting rules.
+*   **TypeScript:** All new code should be in TypeScript.
+*   **Backend Structure:** The backend logic is organized by feature and pattern in the `src/lib` directory (`facade`, `job`, `browser`, `ai`, `execution`).
 *   **Path Aliases:** The project uses the path alias `@/*` to refer to the `src` directory.
