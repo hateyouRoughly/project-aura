@@ -7,4 +7,8 @@ export class ClickCommand implements IActionCommand {
   async execute(): Promise<void> {
     await this.agent.click(this.selector);
   }
+
+  getParameters(): object {
+    return { selector: this.selector };
+  }
 }

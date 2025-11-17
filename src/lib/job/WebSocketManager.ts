@@ -1,7 +1,9 @@
+import { WebSocket, WebSocketServer } from 'ws';
 import { JobObserver } from "./JobObserver";
 
 class WebSocketManager implements JobObserver {
   private static instance: WebSocketManager;
+  private wss: WebSocketServer | null = null;
 
   private constructor() {}
 
@@ -12,9 +14,25 @@ class WebSocketManager implements JobObserver {
     return WebSocketManager.instance;
   }
 
+  public setServer(wss: WebSocketServer): void {
+    if (!this.wss) {
+      this.wss = wss;
+      this.wss.on('connection', (ws: WebSocket) => {
+        console.log('Client connected');
+        ws.on('close', () => console.log('Client disconnected'));
+      });
+    }
+  }
+
   update(jobId: string, message: string): void {
-    console.log(`[WebSocket] Job ${jobId}: ${message}`);
-    // In a real implementation, this would send a message over a WebSocket.
+    if (this.wss) {
+      const data = JSON.stringify({ jobId, message });
+      this.wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(data);
+        }
+      });
+    }
   }
 }
 

@@ -29,16 +29,18 @@ export class JobProcessor {
       return;
     }
 
-    this.notifier.notify(job.id, "Starting job...");
-    jobDoc.status = 'running';
-    jobDoc.startedAt = new Date();
-    await jobDoc.save();
-
-    const agent = this.factory.createAgent();
-    await agent.launch();
-    await agent.navigate(job.url);
+    let agent: any = null;
 
     try {
+      this.notifier.notify(job.id, "Starting job...");
+      jobDoc.status = 'running';
+      jobDoc.startedAt = new Date();
+      await jobDoc.save();
+
+      agent = this.factory.createAgent();
+      await agent.launch();
+      await agent.navigate(job.url);
+
       let taskComplete = false;
       while (!taskComplete) {
         const state = await agent.captureState();
@@ -50,6 +52,7 @@ export class JobProcessor {
           const log = new AuditLog({
             jobId: job.id,
             actionType: command.constructor.name, // e.g., "ClickCommand"
+            details: command.getParameters(), // Add this line
             status: 'success',
           });
           await log.save();
@@ -62,12 +65,18 @@ export class JobProcessor {
       }
     } catch (error) {
       console.error(error);
-      jobDoc.status = 'failed';
-      this.notifier.notify(job.id, "Job failed.");
+      if (jobDoc) {
+        jobDoc.status = 'failed';
+        this.notifier.notify(job.id, "Job failed.");
+      }
     } finally {
-      await agent.close();
-      jobDoc.completedAt = new Date();
-      await jobDoc.save();
+      if (agent) {
+        await agent.close();
+      }
+      if (jobDoc) {
+        jobDoc.completedAt = new Date();
+        await jobDoc.save();
+      }
     }
   }
 }

@@ -30,4 +30,10 @@ const UserSchema = new Schema({
   },
 });
 
+UserSchema.virtual('apiTokens', {
+  ref: 'ApiToken',
+  localField: '_id',
+  foreignField: 'userId',
+});
+
 export default models.User || model('User', UserSchema);
