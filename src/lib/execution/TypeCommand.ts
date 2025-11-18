@@ -7,4 +7,8 @@ export class TypeCommand implements IActionCommand {
   async execute(): Promise<void> {
     await this.agent.type(this.selector, this.text);
   }
+
+  getParameters(): object {
+    return { selector: this.selector, text: this.text };
+  }
 }

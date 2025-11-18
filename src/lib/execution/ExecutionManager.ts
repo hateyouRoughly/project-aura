@@ -1,8 +1,13 @@
 import { IActionCommand } from "./IActionCommand";
+import { LoggingCommandDecorator } from "./LoggingCommandDecorator";
+import { RetryCommandDecorator } from "./RetryCommandDecorator";
 
 export class ExecutionManager {
   async execute(command: IActionCommand): Promise<void> {
-    // In a real implementation, you might have decorators here for logging, etc.
-    await command.execute();
+    let decoratedCommand: IActionCommand = command;
+    decoratedCommand = new LoggingCommandDecorator(decoratedCommand);
+    decoratedCommand = new RetryCommandDecorator(decoratedCommand);
+    
+    await decoratedCommand.execute();
   }
 }

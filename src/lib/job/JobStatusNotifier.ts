@@ -1,5 +1,12 @@
 import { JobObserver } from "./JobObserver";
 
+// Re-defining the Message type on the backend for consistency
+export type Message = {
+  type: 'log' | 'action' | 'thought' | 'error' | 'image';
+  content: string;
+  imageUrl?: string;
+};
+
 export class JobStatusNotifier {
   private observers: JobObserver[] = [];
 
@@ -14,7 +21,7 @@ export class JobStatusNotifier {
     }
   }
 
-  notify(jobId: string, message: string): void {
+  notify(jobId: string, message: Message): void {
     for (const observer of this.observers) {
       observer.update(jobId, message);
     }

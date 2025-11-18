@@ -29,45 +29,60 @@ export class JobProcessor {
       return;
     }
 
-    this.notifier.notify(job.id, "Starting job...");
-    jobDoc.status = 'running';
-    jobDoc.startedAt = new Date();
-    await jobDoc.save();
-
-    const agent = this.factory.createAgent();
-    await agent.launch();
-    await agent.navigate(job.url);
+    let agent: any = null;
 
     try {
+      this.notifier.notify(job.id, { type: 'log', content: "Starting job..." });
+      jobDoc.status = 'running';
+      jobDoc.startedAt = new Date();
+      await jobDoc.save();
+
+      agent = this.factory.createAgent();
+      await agent.launch();
+      this.notifier.notify(job.id, { type: 'log', content: `Navigating to ${job.url}` });
+      await agent.navigate(job.url);
+
       let taskComplete = false;
       while (!taskComplete) {
+        this.notifier.notify(job.id, { type: 'thought', content: "Capturing page state..." });
         const state = await agent.captureState();
+        
+        this.notifier.notify(job.id, { type: 'thought', content: "Interpreting state and deciding next action..." });
         const aiInput = this.builder.build(job.goal, state);
         const command = await this.interpreter.getCommand(aiInput, agent);
 
         if (command) {
+          const commandParams = command.getParameters();
+          this.notifier.notify(job.id, { type: 'action', content: `Executing: ${command.constructor.name} on selector '${commandParams.selector}'` });
           await this.executor.execute(command);
           const log = new AuditLog({
             jobId: job.id,
-            actionType: command.constructor.name, // e.g., "ClickCommand"
+            actionType: command.constructor.name,
+            details: commandParams,
             status: 'success',
           });
           await log.save();
-          this.notifier.notify(job.id, `Executed action: ${log.actionType}`);
         } else {
           taskComplete = true;
           jobDoc.status = 'completed';
-          this.notifier.notify(job.id, "Job completed.");
+          this.notifier.notify(job.id, { type: 'log', content: "Job completed successfully." });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      jobDoc.status = 'failed';
-      this.notifier.notify(job.id, "Job failed.");
+      const errorMessage = error.message || 'An unknown error occurred.';
+      if (jobDoc) {
+        jobDoc.status = 'failed';
+        this.notifier.notify(job.id, { type: 'error', content: `Job failed: ${errorMessage}` });
+      }
     } finally {
-      await agent.close();
-      jobDoc.completedAt = new Date();
-      await jobDoc.save();
+      if (agent) {
+        await agent.close();
+      }
+      if (jobDoc) {
+        jobDoc.completedAt = new Date();
+        await jobDoc.save();
+      }
     }
   }
 }
