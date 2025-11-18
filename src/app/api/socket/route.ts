@@ -1,35 +1,33 @@
+// src/app/api/socket/route.ts
 import { NextResponse } from 'next/server';
-import { webSocketManager } from '@/lib/job/WebSocketManager';
 import { WebSocketServer } from 'ws';
+import { webSocketManager } from '@/lib/job/WebSocketManager';
 
-// This is a global variable to hold the WebSocket server instance
-let wssInitialized = false;
-
-export async function GET(request: Request) {
-  // This is a workaround to get the underlying HTTP server
-  // This may not be reliable in all environments
-  // @ts-ignore
-  const server = request.socket?.server || global.httpServer;
-
-  if (server && !wssInitialized) {
-    console.log('Setting up WebSocket server...');
+function setupWebSocket(server: any) {
     const wss = new WebSocketServer({ noServer: true });
     webSocketManager.setServer(wss);
 
     server.on('upgrade', (req: any, socket: any, head: any) => {
-      wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit('connection', ws, req);
-      });
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit('connection', ws, req);
+        });
     });
+    console.log("WebSocket server upgrade handler configured.");
+}
 
-    // Store the server instance globally for subsequent calls
+export async function GET(request: Request) {
+    // This is a workaround to get the underlying HTTP server in Next.js
     // @ts-ignore
-    global.httpServer = server;
-    wssInitialized = true;
-  }
+    const server = request.socket?.server || (global as any).httpServer;
 
-  // This endpoint doesn't return anything directly, 
-  // it just sets up the WebSocket server.
-  // The actual WebSocket connection is handled by the upgrade mechanism.
-  return new NextResponse('WebSocket server is running.', { status: 200 });
+    if (server && !(global as any).webSocketServerInitialized) {
+        console.log("Initializing WebSocket server...");
+        setupWebSocket(server);
+        (global as any).webSocketServerInitialized = true;
+        if (!(global as any).httpServer) {
+            (global as any).httpServer = server;
+        }
+    }
+    
+    return new NextResponse('Socket endpoint is active.', { status: 200 });
 }
